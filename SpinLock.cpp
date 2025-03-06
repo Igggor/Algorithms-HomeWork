@@ -10,7 +10,6 @@ public:
     void lock() {
         retries = 0;
         while (flag.test_and_set(std::memory_order_acquire)) {
-            // spin until the lock is released
             backoff();
             retries++;
         }
@@ -23,9 +22,9 @@ public:
 private:
     void backoff() {
         const int max_retries = 8;
-        if (retries < max_retries) {
+        if (retries < max_retries)
             std::this_thread::yield();
-        } else {
+        else {
             auto delay = std::chrono::microseconds(1 << (retries - max_retries));
             std::this_thread::sleep_for(delay);
         }
