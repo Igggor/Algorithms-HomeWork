@@ -1,0 +1,20 @@
+#pragma once
+#include <memory>
+
+class SomeImpl;
+
+class Some {
+	std::unique_ptr<SomeImpl> pimpl_;
+public:
+	int Do(size_t i) const;
+	int& Do(size_t i);
+
+	Some();
+	Some(Some&& rhs) = default;
+	Some(const Some& rhs);
+	~Some();
+
+private:
+	const SomeImpl* getImpl() const { return pimpl_.get(); }
+	SomeImpl* getImpl() { return pimpl_.get(); }
+};
