@@ -3,75 +3,110 @@
 #include "typelist.h"
 #include "typelist_detail.h"
 
-struct A{};
-struct B{};
-struct C{};
-struct D{};
-struct E{};
+class Widget {};
+class Service {};
+class Model {};
+class View {};
+class Controller {};
 
 int main(){
     using namespace typelist;
 
-    using Standard = TypeList<A, B, C>;
-    using Clone = TypeList<A, B, C>;
-    using Variant = TypeList<A, B, D>;
-    using Empty = TypeList<>;
+    using List1 = TypeList<Widget, Service, Model>;
+    using List2 = TypeList<Widget, Service, Model>;
+    using List3 = TypeList<Widget, Service, View>;
+    using NullList = TypeList<>;
 
-    static_assert(Standard{} == Clone{}, "Lists with identical types must compare equal");
-    static_assert(!(Standard{} == Variant{}), "Different lists must not be equal");
-    static_assert(Standard{} != Variant{}, "Operator!= should distinguish non-equal lists");
+    // Проверки равенства и неравенства
+    static_assert(List1{} == List2{});
+    static_assert(!(List1{} == List3{}));
+    static_assert(List1{} != List3{});
+    
+    // Проверка размера
+    static_assert(size_v<List1> == 3);
+    static_assert(size(List1{}) == 3);
+    static_assert(size(NullList{}) == 0);
+    static_assert(size(List1{}) != size(NullList{}));
 
-    static_assert(size_v<Standard> == 3);
-    static_assert(size(Standard{}) == size(Clone{}));
-    static_assert(size(Empty{}) == 0);
+    // Доступ к элементам с использованием type_at
+    static_assert(std::is_same_v<type_at_t<0, List1>, Widget>);
+    static_assert(std::is_same_v<type_at_t<1, List1>, Service>);
+    static_assert(std::is_same_v<type_at_t<2, List1>, Model>);
 
-    using First = decltype(type_at<0>(Standard{}));
-    using Second = decltype(type_at<1>(Standard{}));
-    using Third = decltype(type_at<2>(Standard{}));
+    auto elem0 = type_at<0>(List1{});
+    auto elem1 = type_at<1>(List1{});
+    static_assert(std::is_same_v<decltype(elem0), Widget>);
+    static_assert(std::is_same_v<decltype(elem1), Service>);
 
-    static_assert(std::is_same_v<First, A>);
-    static_assert(std::is_same_v<Second, B>);
-    static_assert(std::is_same_v<Third, C>);
-    static_assert(std::is_same_v<type_at_t<0, Standard>, A>);
-    static_assert(std::is_same_v<type_at_t<1, Standard>, B>);
-    static_assert(std::is_same_v<type_at_t<2, Standard>, C>);
+    // Проверка принадлежности
+    static_assert(contains_v<Widget, List1>);
+    static_assert(contains_v<Model, List1>);
+    static_assert(!contains_v<View, List1>);
+    static_assert(!contains_v<Controller, List1>);
 
-    constexpr bool foundA = contains<A>(Standard{});
-    constexpr bool foundD = contains<D>(Standard{});
-    static_assert(foundA);
-    static_assert(!foundD);
-    static_assert(contains_v<C, Standard>);
-    static_assert(!contains_v<E, Standard>);
+    constexpr auto hasWidget = contains<Widget>(List1{});
+    constexpr auto hasController = contains<Controller>(List1{});
+    static_assert(hasWidget);
+    static_assert(!hasController);
 
-    constexpr int whereA = index_of<A>(Standard{});
-    constexpr int whereB = index_of<B>(Standard{});
-    constexpr int whereC = index_of<C>(Standard{});
-    static_assert(whereA == 0);
-    static_assert(whereB == 1);
-    static_assert(whereC == 2);
-    static_assert(index_of_v<B, Standard> == 1);
+    // Поиск позиции
+    static_assert(index_of_v<Widget, List1> == 0);
+    static_assert(index_of_v<Service, List1> == 1);
+    static_assert(index_of_v<Model, List1> == 2);
 
-    using InsertedFront = push_front_t<TypeList<B, C>, A>;
-    using InsertedBack = push_back_t<TypeList<A, B, C>, D>;
-    static_assert(std::is_same_v<InsertedFront, TypeList<A, B, C>>);
-    static_assert(std::is_same_v<InsertedBack, TypeList<A, B, C, D>>);
-    static_assert(push_front<A>(TypeList<B, C>{}) == Standard{});
-    static_assert(push_back<D>(Standard{}) == TypeList<A, B, C, D>{});
+    constexpr auto pos0 = index_of<Widget>(List1{});
+    constexpr auto pos2 = index_of<Model>(List1{});
+    static_assert(pos0 == 0);
+    static_assert(pos2 == 2);
 
-    using AfterPop = pop_front_t<Standard>;
-    static_assert(std::is_same_v<AfterPop, TypeList<B, C>>);
-    static_assert(pop_front(Standard{}) == TypeList<B, C>{});
+    // Операции вставки в начало
+    using PrependView = push_front_t<TypeList<Service, Model>, Widget>;
+    static_assert(std::is_same_v<PrependView, List1>);
+    static_assert(push_front<Widget>(TypeList<Service, Model>{}) == List1{});
 
-    static_assert(pop_front(push_front<D>(Standard{})) == Standard{});
-    static_assert(push_front<D>(pop_front(Standard{})) == TypeList<D, B, C>{});
+    auto r1 = push_front<Controller>(TypeList<Widget, Service>{});
+    static_assert(r1 == TypeList<Controller, Widget, Service>{});
 
-    static_assert(push_front<A>(Empty{}) == TypeList<A>{});
-    static_assert(push_back<A>(Empty{}) == TypeList<A>{});
-    static_assert(pop_front(TypeList<A>{}) == TypeList<>{});
+    // Операции вставки в конец
+    using AppendController = push_back_t<TypeList<Widget, Service>, Model>;
+    static_assert(std::is_same_v<AppendController, List1>);
+    static_assert(push_back<Model>(List1{}) == TypeList<Widget, Service, Model, Model>{});
 
-    using Huge = TypeList<int, double, char, float, long, short, A, B, C, D, E>;
-    static_assert(size(Huge{}) == 11);
+    auto r2 = push_back<View>(List1{});
+    static_assert(r2 == TypeList<Widget, Service, Model, View>{});
 
-    std::cout << "TypeList compile-time verification completed." << std::endl;
+    // Удаление из начала
+    using Truncated = pop_front_t<List1>;
+    static_assert(std::is_same_v<Truncated, TypeList<Service, Model>>);
+    static_assert(pop_front(List1{}) == TypeList<Service, Model>{});
+
+    // Составные операции
+    static_assert(
+        pop_front(push_front<View>(List1{})) == List1{}
+    );
+    
+    static_assert(
+        push_front<Controller>(pop_front(List1{})) == 
+        TypeList<Controller, Service, Model>{}
+    );
+
+    // Граничный случай: один элемент
+    using Single = TypeList<Widget>;
+    static_assert(size(Single{}) == 1);
+    static_assert(pop_front(Single{}) == NullList{});
+    static_assert(push_front<Service>(pop_front(Single{})) == TypeList<Service>{});
+
+    // Граничный случай: пустой список
+    static_assert(push_front<Widget>(NullList{}) == Single{});
+    static_assert(push_back<Widget>(NullList{}) == Single{});
+
+    // Большой составной список
+    using MixedList = TypeList<int, double, Widget, char, Service, float, Model, long, View, short, Controller>;
+    static_assert(size(MixedList{}) == 11);
+    static_assert(contains_v<Service, MixedList>);
+    static_assert(contains_v<double, MixedList>);
+    static_assert(index_of_v<Service, MixedList> == 4);
+
+    std::cout << "Тестирование TypeList прошло у" << std::endl;
     return 0;
 }
