@@ -3,47 +3,65 @@
 #include <string>
 #include <cassert>
 
-struct DataA{
-    std::string value;
-    bool operator==(const DataA &other) const { return value == other.value; }
+struct Configuration {
+    std::string name;
+    bool operator==(const Configuration &other) const { return name == other.name; }
 };
 
-
-
-struct DataB{
-    int value;
-    bool operator==(const DataB &other) const { return value == other.value; }
+struct Metadata {
+    long identifier;
+    bool operator==(const Metadata &other) const { return identifier == other.identifier; }
 };
-
 
 int main(){
-    typemap::TypeMap<int, double, DataA, DataB> myTypeMap;
+    typemap::TypeMap<long, float, Configuration, Metadata> registry;
 
-    myTypeMap.AddValue<int>(42);
-    myTypeMap.AddValue<double>(3.14159);
-    myTypeMap.AddValue<DataA>({"Hello, TypeMap!"});
-    myTypeMap.AddValue<DataB>({10});
+    assert(registry.Size() == 0);
+    assert(registry.Capacity() == 4);
 
-    assert(myTypeMap.GetValue<int>() == 42);
-    assert(myTypeMap.GetValue<double>() == 3.14159);
-    assert(myTypeMap.GetValue<DataA>().value == "Hello, TypeMap!");
-    assert(myTypeMap.GetValue<DataB>().value == 10);
+    // Добавление значений разных типов
+    registry.AddValue<long>(999999L);
+    registry.AddValue<float>(2.71828f);
+    registry.AddValue<Configuration>({"AppSettings"});
+    registry.AddValue<Metadata>({12345});
 
-    assert(myTypeMap.Contains<int>() == true);
-    assert(myTypeMap.Contains<double>() == true);
-    assert(myTypeMap.Contains<DataA>() == true);
-    assert(myTypeMap.Contains<DataB>() == true);
+    // Проверка размера после добавления
+    assert(registry.Size() == 4);
+    assert(registry.Capacity() == 4);
 
-    assert(myTypeMap.Size() == 4);
-    assert(myTypeMap.Capacity() == 4);
+    // Проверка наличия элементов
+    assert(registry.Contains<long>());
+    assert(registry.Contains<float>());
+    assert(registry.Contains<Configuration>());
+    assert(registry.Contains<Metadata>());
 
-    myTypeMap.RemoveValue<double>();
-    assert(myTypeMap.Contains<double>() == false);
-    assert(myTypeMap.Size() == 3);
+    // Извлечение и валидация значений
+    assert(registry.GetValue<long>() == 999999L);
+    assert(registry.GetValue<float>() == 2.71828f);
+    assert(registry.GetValue<Configuration>().name == "AppSettings");
+    assert(registry.GetValue<Metadata>().identifier == 12345);
 
-    myTypeMap.Clear();
-    assert(myTypeMap.Size() == 0);
+    // Удаление элемента
+    registry.RemoveValue<float>();
+    assert(!registry.Contains<float>());
+    assert(registry.Size() == 3);
 
-    std::cout << "All tests passed!" << std::endl;
+    // Проверка оставшихся элементов
+    assert(registry.Contains<long>());
+    assert(registry.Contains<Configuration>());
+    assert(registry.Contains<Metadata>());
+
+    // Изменение значения
+    registry.AddValue<Configuration>({"UpdatedSettings"});
+    assert(registry.GetValue<Configuration>().name == "UpdatedSettings");
+
+    // Полная очистка
+    registry.Clear();
+    assert(registry.Size() == 0);
+    assert(!registry.Contains<long>());
+    assert(!registry.Contains<Configuration>());
+    assert(!registry.Contains<Metadata>());
+
+    std::cout << "Все тесты TypeMap выполнены без ошибок" << std::endl;
     return 0;
 }
