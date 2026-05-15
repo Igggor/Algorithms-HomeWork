@@ -2,22 +2,27 @@
 #include <sstream>
 #include <string>
 #include <memory>
-#include "classes.h"
+#include "user.h"
+#include "group.h"
+#include "users.h"
+#include "groups.h"
 
-
-int main(){
+int main()
+{
     Users users;
     Groups groups;
     std::string command;
 
-    while (true){
+    while (true)
+    {
         std::cout << "> ";
         std::getline(std::cin, command);
         std::istringstream iss(command);
         std::string cmd;
         iss >> cmd;
 
-        if (cmd == "createUser"){
+        if (cmd == "createUser")
+        {
             std::string id, name, meta;
             iss >> id >> name >> meta;
 
@@ -25,12 +30,13 @@ int main(){
             users.add_user(user);
             std::cout << "User created.\n";
         }
-
-        else if (cmd == "deleteUser"){
+        else if (cmd == "deleteUser")
+        {
             std::string id;
             iss >> id;
             auto u = users.get_user(id);
-            if (u){
+            if (u)
+            {
                 auto g = u->get_group();
                 if (g)
                     g->remove_user(id);
@@ -38,11 +44,12 @@ int main(){
             users.delete_user(id);
             std::cout << "User deleted.\n";
         }
-
         else if (cmd == "allUsers")
+        {
             std::cout << users.all_users_info();
-        
-        else if (cmd == "getUser"){
+        }
+        else if (cmd == "getUser")
+        {
             std::string id;
             iss >> id;
             auto u = users.get_user(id);
@@ -51,21 +58,23 @@ int main(){
             else
                 std::cout << "User not found\n";
         }
-        
-        else if (cmd == "createGroup"){
+        else if (cmd == "createGroup")
+        {
             std::string id, name;
             iss >> id >> name;
             auto group = std::make_shared<Group>(id, name);
             groups.add_group(group);
             std::cout << "Group created.\n";
         }
-
-        else if (cmd == "deleteGroup"){
+        else if (cmd == "deleteGroup")
+        {
             std::string id;
             iss >> id;
             auto g = groups.get_group(id);
-            if (g){
-                for (const auto &uid : g->get_user_ids()){
+            if (g)
+            {
+                for (const auto &uid : g->get_user_ids())
+                {
                     auto u = users.get_user(uid);
                     if (u)
                         u->remove_group();
@@ -74,18 +83,20 @@ int main(){
             groups.delete_group(id);
             std::cout << "Group deleted.\n";
         }
-        
-        else if (cmd == "setUserGroup"){
+        else if (cmd == "setUserGroup")
+        {
             std::string user_id, group_id;
             iss >> user_id >> group_id;
 
             auto u = users.get_user(user_id);
-            if (!u){
+            if (!u)
+            {
                 std::cout << "User not found\n";
                 continue;
             }
 
-            if (group_id == "none"){
+            if (group_id == "none")
+            {
                 auto old_g = u->get_group();
                 if (old_g)
                     old_g->remove_user(user_id);
@@ -95,7 +106,8 @@ int main(){
             }
 
             auto new_g = groups.get_group(group_id);
-            if (!new_g){
+            if (!new_g)
+            {
                 std::cout << "Group not found\n";
                 continue;
             }
@@ -108,11 +120,12 @@ int main(){
             u->set_group(new_g);
             std::cout << "User " << user_id << " added to group " << group_id << "\n";
         }
-
         else if (cmd == "allGroups")
+        {
             std::cout << groups.all_groups_info();
-
-        else if (cmd == "getGroup"){
+        }
+        else if (cmd == "getGroup")
+        {
             std::string id;
             iss >> id;
             auto g = groups.get_group(id);
@@ -126,7 +139,5 @@ int main(){
         else
             std::cout << "Unknown command\n";
     }
-
-
     return 0;
 }
