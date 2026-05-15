@@ -5,8 +5,8 @@
 #include "PointCloud.h"
 
 #include <string>
-#include <cmath>
 #include <unordered_map>
+#include <utility>
 
 namespace pointcloud_preprocessor
 {
@@ -41,30 +41,19 @@ class Filter
 public:
   explicit Filter(const std::string& filter_name = "pointcloud_preprocessor_filter")
   : filter_name_(filter_name), logger_(filter_name_) {}
+
+  virtual ~Filter() = default;
   
   const std::string& GetFilterName() const {
       return filter_name_;
   }
   
   double GetDistance(const PointCloud* pc, size_t index) const {
-      if (pc->pointcloud_type_ == "XYZIR") {
-          double x = pc->points_[index * pc->point_size_ + 0];
-          double y = pc->points_[index * pc->point_size_ + 1];
-          double z = pc->points_[index * pc->point_size_ + 2];
-          return std::hypot(x, y, z);
-      }
-
-      return pc->points_[index * pc->point_size_ + 5];
+      return pc->GetPointFieldAccessor().GetDistance(*pc, index);
   }
   
   double GetAzimuth(const PointCloud* pc, size_t index) const {
-      if (pc->pointcloud_type_ == "XYZIR") {
-          double x = pc->points_[index * pc->point_size_ + 0];
-          double y = pc->points_[index * pc->point_size_ + 1];
-          return std::atan2(y, x);
-      }
-
-      return pc->points_[index * pc->point_size_ + 6];
+      return pc->GetPointFieldAccessor().GetAzimuth(*pc, index);
   }
 
   virtual PointCloud* Apply(PointCloud* pc) = 0;

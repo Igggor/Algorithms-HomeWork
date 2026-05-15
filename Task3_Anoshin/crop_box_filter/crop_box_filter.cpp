@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 namespace pointcloud_preprocessor
@@ -43,8 +44,8 @@ PointCloud* CropBoxFilter::Apply(PointCloud* pc)
   }
 
   auto output_pc = new PointCloud;
+  output_pc->Init(pc->pointcloud_type_, 0);
   output_pc->points_ = std::move(output);
-  output_pc->pointcloud_type_ = pc->pointcloud_type_;
   output_pc->point_size_ = point_size;
   output_pc->size_ = output_pc->points_.empty() ? 0 : output_pc->points_.size() / point_size;
   return output_pc;
